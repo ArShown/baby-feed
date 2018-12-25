@@ -23,10 +23,14 @@
         var card = $('<a>').
         addClass('list-group-item list-group-item-action flex-column align-items-start author-list__item').
         attr('href', '#').data('row', item.row).click(function () {
-          $(this).addClass('author-list__item--modify');
+          var _self = $(this);
+          _self.addClass('author-list__item--modify');
+          var scrollTop = $(window).scrollTop();
           $('.modify-modal').empty().load('admin/templates/anchor.modify.form.html', function () {
-            $(this).on('hidden.bs.modal', function () {
-              $('.author-list__item--modify').removeClass('author-list__item--modify');
+            $(this).one('show.bs.modal', function () {
+              window.scrollTo(0, scrollTop);
+            }).one('hidden.bs.modal', function () {
+              _self.removeClass('author-list__item--modify');
             }).modal('show');
           });
         });
