@@ -22,11 +22,111 @@
     <div class="form-group">
       <label>圖片</label>
       <div class="custom-file">
-        <input type="file" class="custom-file-input" id="validatedCustomFile" multiple>
-        <label class="custom-file-label" for="validatedCustomFile">選擇檔案</label>
+        <input type="file" class="custom-file-input" id="validatedCustomFile" multiple onChange="getFileChange(this);">
+        <label class="custom-file-label file-placeholder" for="validatedCustomFile">選擇檔案</label>
       </div>
     </div>
     <div class="btn btn-info btn-block" onClick="anchorSubmit();">新增</div>
     <div class="server-message"></div>
   </form>
 </div>
+<script>
+  function getFileChange(e) {
+    $('.file-placeholder').html('選擇 ' + e.files.length + ' 個檔案');
+  }
+
+  function anchorCreateBreak(msg) {
+    loading(false);
+    $('.server-message').html(msg);
+  }
+
+  function anchorSubmit() {
+    function _vaildField(obj) {
+      return function (field) {
+        if (obj[field] === '') {
+          $('.anchor-form input[name=' + field + ']').addClass('is-invalid');
+          return false;
+        }
+        $('.anchor-form input[name=' + field + ']').removeClass('is-invalid');
+        return true;
+      };
+    }
+
+    function _validate(obj) {
+      var vaild = _vaildField(obj);
+      var dateValid = vaild('date');
+      var noteValid = vaild('note');
+      return dateValid && noteValid;
+    }
+
+    function send(data) {
+      var ajaxPost = _post(
+        'https://script.google.com/macros/s/AKfycbyCHIq0lHYV8sDwwUUXlLXMMVvzkuNx9QEfkl0HgSzdkxg-YA/exec');
+      ajaxPost(data, function (res) {
+        if (!res.success) {
+          alert(res.reason);
+          return false;
+        }
+
+        anchorCreateBreak('新增成功');
+        $('.anchor-form input').val('');
+        $('.anchor-form textarea').val('');
+        var d = new Date().toLocaleDateString();
+        $('.anchor-form input[type=date]').val(d.replace(new RegExp('/', 'g'), '-'));
+      });
+    }
+
+    /* init */
+    $('.server-message').html('');
+
+    var formDataArray = $('.anchor-form').serializeArray();
+    var formDataObj = formDataArray.reduce(function (obj, data) {
+      obj[data.name] = data.value;
+      return obj;
+    }, {});
+
+    /* validate */
+    if (!_validate(formDataObj)) return false;
+
+    /* lock screen */
+    loading(true);
+
+    /* request */
+    var req = {
+      id: getQuery('id'),
+      action: 'create',
+      date: new Date(formDataObj.date).toLocaleDateString(),
+      note: formDataObj.note,
+      info: formDataObj.info,
+      images: ""
+    };
+
+    /* images upload */
+    var files = $('.anchor-form').find('input[type="file"]')[0].files;
+    var filesCount = files.length;
+    if (filesCount > 0) {
+      var filePromise = Array.from(files).map(function (file, idx) {
+        $('.server-message').append('<div>' + file.name + '...</div>');
+        return new Promise(function (resolve, reject) {
+          fileUpload(file, function (res) {
+            if (!res.success) return reject(res.reason);
+            $('.server-message > div').eq(idx).html(function () {
+              return $(this).html() + 'done';
+            });
+            $('.anchor-form').append('');
+            return resolve(res.id);
+          });
+        });
+      });
+      Promise.all(filePromise).then(ids => {
+        req['images'] = ids.join(',');
+        send(req);
+      }).catch(function (err) {
+        anchorCreateBreak(err);
+      });
+    } else send(req);
+
+    return false;
+  }
+
+</script>

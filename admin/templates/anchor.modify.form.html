@@ -1,0 +1,128 @@
+<div class="modal-dialog" role="document">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title">消息編輯</h5>
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form class="anchor-modify-form">
+        <input type="hidden" name="row"/>
+        <div class="form-group">
+          <label>日期*</label>
+          <input type="date" name="date" class="form-control"/>
+          <div class="invalid-feedback">
+            請選擇日期
+          </div>
+        </div>
+        <div class="form-group">
+          <label>標題*</label>
+          <input type="text" name="note" class="form-control"/>
+          <div class="invalid-feedback">
+            請輸入標題
+          </div>
+        </div>
+        <div class="form-group">
+          <label>內容</label>
+          <textarea name="info" class="form-control" cols="5"></textarea>
+        </div>
+        <div class="form-group">
+          <label>圖片</label>
+          <div class="custom-file">
+            <input type="file" class="custom-file-input" id="validatedCustomFile" multiple
+                   onChange="getFileChange(this);">
+            <label class="custom-file-label file-placeholder" for="validatedCustomFile">選擇檔案</label>
+          </div>
+        </div>
+        <div class="form-group anchor-modal__file-list">
+
+        </div>
+        <div class="server-message"></div>
+      </form>
+    </div>
+    <div class="modal-footer anchor-modal__footer">
+      <button type="button" class="btn btn-link btn-block" onClick="deleteSubmit();">刪除</button>
+      <button type="button" class="btn btn-info btn-block" onClick="updateSubmit();">更新</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function getFileChange(e) {
+    $('.file-placeholder').html('選擇 ' + e.files.length + ' 個檔案');
+  }
+
+  function deleteSubmit() {
+    if (!confirm('刪除後無法復原，確定要刪除嗎？')) return false;
+
+    loading(true);
+
+    var imageRemovePromise = [];
+    $('.anchor-modal__file-list__item').each(function () {
+      var id = $(this).data('id');
+      var promise = new Promise(function (resolve) {
+        ImageModelImp.deleteById(id, resolve);
+      });
+      imageRemovePromise.push(promise);
+    });
+
+    Promise.all(imageRemovePromise).then(function () {
+      var row = $('.anchor-modify-form input[name="row"]').val();
+      AnchorModelImp.deleteAnchor(row, function (res) {
+        loading(false);
+        if (!res.success) {
+          alert('刪除失敗');
+          return false;
+        }
+        $('.modify-modal').empty().modal('hide');
+        $('.author-list__item--modify').remove();
+      });
+    });
+  }
+
+  function updateSubmit() {
+    var formDataArray = $('.anchor-modify-form').serializeArray();
+    var imageRemoves = [],
+      imageKeeps = [];
+    $('.anchor-modify-form .anchor-modal__file-list__item').each(function () {
+      if ($(this).hasClass('anchor-modal__file-list__item--remove'))
+        imageRemoves.push($(this).data('id'));
+      else
+        imageKeeps.push($(this).data('id'));
+    });
+    console.log('removes: ', imageRemoves);
+    console.log('keeps: ', imageKeeps);
+  }
+
+  function insertValues(data) {
+    var form = $('.anchor-modify-form');
+    form.find('input[name="row"]').val(data.row);
+    form.find('input[name="date"]').
+    val(new Date(data.date).toLocaleDateString().replace(new RegExp('/', 'g'), '-'));
+    form.find('input[name="note"]').val(data.note);
+    form.find('textarea[name="info"]').val(data.info);
+    var images = data.images.map(function (image) {
+      var href = 'http://drive.google.com/uc?export=view&id=' + image;
+      var box = $('<div>').addClass('anchor-modal__file-list__item').data('id', image).click(function () {
+        var _this = $(this);
+        _this.
+        find('.anchor-modal__file-list__remove').
+        html(_this.hasClass('anchor-modal__file-list__item--remove') ? '移除' : '復原');
+        _this.toggleClass('anchor-modal__file-list__item--remove');
+      });
+      $('<div>').
+      addClass('anchor-modal__file-list__image').
+      css('background-image', 'url("' + href + '")').
+      appendTo(box);
+      $('<div>').addClass('anchor-modal__file-list__remove').html('移除').appendTo(box);
+      return box;
+    });
+    $('.anchor-modal__file-list').append(images);
+  }
+
+  $(function () {
+    var targetEle = $('.author-list__item.author-list__item--modify');
+    insertValues(targetEle.data('data'));
+  });
+</script>
