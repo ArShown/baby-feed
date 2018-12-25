@@ -49,6 +49,10 @@
 </div>
 
 <script>
+  function setServerMessage(msg) {
+    $('.server-message').html(msg);
+  }
+
   function getFileChange(e) {
     $('.file-placeholder').html('選擇 ' + e.files.length + ' 個檔案');
   }
@@ -82,7 +86,48 @@
   }
 
   function updateSubmit() {
+    var row = $('.anchor-modify-form input[name="row"]').val();
+
+    function _vaildField(obj) {
+      return function (field) {
+        if (obj[field] === '') {
+          $('.anchor-modify-form input[name=' + field + ']').addClass('is-invalid');
+          return false;
+        }
+        $('.anchor-modify-form input[name=' + field + ']').removeClass('is-invalid');
+        return true;
+      };
+    }
+
+    function _validate(obj) {
+      var vaild = _vaildField(obj);
+      var dateValid = vaild('date');
+      var noteValid = vaild('note');
+      return dateValid && noteValid;
+    }
+
+    function send(data) {
+      AnchorModelImp.updateAnchor(row, data, function (res) {
+        if (!res.success) {
+          alert(res.reason);
+          return false;
+        }
+      });
+    }
+
     var formDataArray = $('.anchor-modify-form').serializeArray();
+    var formDataObj = formDataArray.reduce(function (obj, data) {
+      obj[data.name] = data.value;
+      return obj;
+    }, {});
+
+    /* validate */
+    if (!_validate(formDataObj)) return false;
+
+    /* lock screen */
+    loading(true);
+
+    /* images category */
     var imageRemoves = [],
       imageKeeps = [];
     $('.anchor-modify-form .anchor-modal__file-list__item').each(function () {
@@ -91,8 +136,71 @@
       else
         imageKeeps.push($(this).data('id'));
     });
-    console.log('removes: ', imageRemoves);
-    console.log('keeps: ', imageKeeps);
+
+    /* request */
+    var req = {
+      date: new Date(formDataObj.date).toLocaleDateString(),
+      note: formDataObj.note,
+      info: formDataObj.info,
+      images: imageKeeps
+    };
+
+    /* images upload */
+    var files = $('.anchor-modify-form').find('input[type="file"]')[0].files;
+    var filesCount = files.length;
+    var fileUploadPromise = new Promise(function (resolve) {
+      resolve([]);
+    });
+    if (filesCount > 0) {
+      var filePromise = filePromise = Array.from(files).map(function (file, idx) {
+        $('.server-message').append('<div>' + file.name + '...</div>');
+        return new Promise(function (resolve, reject) {
+          fileUpload(file, function (res) {
+            if (!res.success) return reject(res.reason);
+            $('.server-message > div').eq(idx).html(function () {
+              return $(this).html() + 'done';
+            });
+            return resolve(res.id);
+          });
+        });
+      });
+      fileUploadPromise = Promise.all(filePromise).then(function (ids) {
+        return ids;
+      }).catch(function (err) {
+        loading(false);
+        setServerMessage(err);
+      });
+    }
+
+    var imageRemovePromise = imageRemoves.map(function (id) {
+      return new Promise(function (resolve) {
+        ImageModelImp.deleteById(id, resolve);
+      });
+    });
+
+    fileUploadPromise.then(function (ids) {
+      req['images'] = req['images'].concat(ids).join(',');
+
+      Promise.all(imageRemovePromise).then(function () {
+        AnchorModelImp.updateAnchor(row, req, function (res) {
+          loading(false);
+          if (!res.success) {
+            setServerMessage('更新失敗');
+            return false;
+          }
+          $('.modify-modal').empty().modal('hide');
+          $('.author-list__item--modify').empty();
+          setElementContent.bind($('.author-list__item--modify'))({
+            row: row,
+            date: req.date,
+            note: req.note,
+            info: req.info,
+            images: req.images === "" ? [] : req.images.split(',')
+          });
+          $('.author-list__item--modify').removeClass('author-list__item--modify');
+        });
+      });
+    });
   }
 
   function insertValues(data) {

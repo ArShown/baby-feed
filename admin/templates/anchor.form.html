@@ -60,9 +60,7 @@
     }
 
     function send(data) {
-      var ajaxPost = _post(
-        'https://script.google.com/macros/s/AKfycbyCHIq0lHYV8sDwwUUXlLXMMVvzkuNx9QEfkl0HgSzdkxg-YA/exec');
-      ajaxPost(data, function (res) {
+      AnchorModelImp.createAnchor(data, function (res) {
         if (!res.success) {
           alert(res.reason);
           return false;
@@ -93,8 +91,6 @@
 
     /* request */
     var req = {
-      id: getQuery('id'),
-      action: 'create',
       date: new Date(formDataObj.date).toLocaleDateString(),
       note: formDataObj.note,
       info: formDataObj.info,
@@ -113,7 +109,6 @@
             $('.server-message > div').eq(idx).html(function () {
               return $(this).html() + 'done';
             });
-            $('.anchor-form').append('');
             return resolve(res.id);
           });
         });
