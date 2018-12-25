@@ -10,7 +10,7 @@
     this.data('data', item);
     var title = $('<div>').addClass('d-flex w-100 justify-content-between').html('<h5>' + item.note + '</h5>');
     var content = $('<p>').addClass('mb-1').html(item.info);
-    var date = $('<small>').html(new Date(item.date).toLocaleDateString());
+    var date = $('<small>').html(item.date);
     this.append([title, content, date]);
     return this;
   }
@@ -25,7 +25,9 @@
         attr('href', '#').data('row', item.row).click(function () {
           $(this).addClass('author-list__item--modify');
           $('.modify-modal').empty().load('admin/templates/anchor.modify.form.html', function () {
-            $(this).modal('show');
+            $(this).on('hidden.bs.modal', function () {
+              $('.author-list__item--modify').removeClass('author-list__item--modify');
+            }).modal('show');
           });
         });
         setElementContent.bind(card)(item).appendTo(_list);

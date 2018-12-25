@@ -79,8 +79,9 @@
           alert('刪除失敗');
           return false;
         }
-        $('.modify-modal').empty().modal('hide');
-        $('.author-list__item--modify').remove();
+        $('.modify-modal').empty().modal('hide', function () {
+          $('.author-list__item--modify').remove();
+        });
       });
     });
   }
@@ -139,7 +140,7 @@
 
     /* request */
     var req = {
-      date: new Date(formDataObj.date).toLocaleDateString(),
+      date: formDataObj.date,
       note: formDataObj.note,
       info: formDataObj.info,
       images: imageKeeps
@@ -188,7 +189,7 @@
             setServerMessage('更新失敗');
             return false;
           }
-          $('.modify-modal').empty().modal('hide');
+
           $('.author-list__item--modify').empty();
           setElementContent.bind($('.author-list__item--modify'))({
             row: row,
@@ -197,7 +198,7 @@
             info: req.info,
             images: req.images === "" ? [] : req.images.split(',')
           });
-          $('.author-list__item--modify').removeClass('author-list__item--modify');
+          $('.modify-modal').empty().modal('hide');
         });
       });
     });
@@ -207,7 +208,7 @@
     var form = $('.anchor-modify-form');
     form.find('input[name="row"]').val(data.row);
     form.find('input[name="date"]').
-    val(new Date(data.date).toLocaleDateString().replace(new RegExp('/', 'g'), '-'));
+    val(data.date);
     form.find('input[name="note"]').val(data.note);
     form.find('textarea[name="info"]').val(data.info);
     var images = data.images.map(function (image) {

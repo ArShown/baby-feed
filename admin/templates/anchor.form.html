@@ -69,8 +69,8 @@
         anchorCreateBreak('新增成功');
         $('.anchor-form input').val('');
         $('.anchor-form textarea').val('');
-        var d = new Date().toLocaleDateString();
-        $('.anchor-form input[type=date]').val(d.replace(new RegExp('/', 'g'), '-'));
+        var d = new Date();
+        $('.anchor-form input[type=date]').val(dd.getFullYear() + '-' + (d.getMonth() + 1) + '-' + (d.getDate() < 10 ? '0' : '') + d.getDate());
       });
     }
 
@@ -91,7 +91,7 @@
 
     /* request */
     var req = {
-      date: new Date(formDataObj.date).toLocaleDateString(),
+      date: formDataObj.date,
       note: formDataObj.note,
       info: formDataObj.info,
       images: ""
