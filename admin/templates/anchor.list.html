@@ -26,11 +26,12 @@
           var _self = $(this);
           _self.addClass('author-list__item--modify');
           var scrollTop = $(window).scrollTop();
-          $('.modify-modal').empty().load('admin/templates/anchor.modify.form.html', function () {
+          $('.modify-modal').load('admin/templates/anchor.modify.form.html', function () {
             $(this).one('show.bs.modal', function () {
               window.scrollTo(0, scrollTop);
             }).one('hidden.bs.modal', function () {
               _self.removeClass('author-list__item--modify');
+              $(this).empty();
             }).modal('show');
           });
         });

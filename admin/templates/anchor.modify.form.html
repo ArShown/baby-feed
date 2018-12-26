@@ -79,9 +79,10 @@
           alert('刪除失敗');
           return false;
         }
-        $('.modify-modal').empty().modal('hide', function () {
+        $('.modify-modal').one('hide.bs.modal', function () {
           $('.author-list__item--modify').remove();
         });
+        $('.close').click();
       });
     });
   }
