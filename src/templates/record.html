@@ -71,7 +71,7 @@
             <label>快速查詢</label>
             <div class="fast">
               <button class="col bg-light text-secondary fast__item" onclick="fastSearch('twomonth');">
-                最近兩個月
+                前兩個月
               </button>
               <button class="col bg-light text-secondary fast__item" onclick="fastSearch('lastmonth');">
                 上個月
@@ -81,7 +81,7 @@
               </button>
               <div class="w-100"></div>
               <button class="col bg-light text-secondary fast__item" onclick="fastSearch('lastweek');">
-                最近一週
+                上一週
               </button>
               <button class="col bg-light text-secondary fast__item" onclick="fastSearch('yesterday');">
                 前一日
@@ -171,6 +171,41 @@
     emitSearch();
   }
 
+  function insertData(res){
+    /* table clear */
+    $('.date-sheet__body').empty();
+
+    /* insert data */
+    var result = res.reduce(function (result, obj) {
+      var targetIdx = result.findIndex(function (item) {
+        return item.date === obj.date;
+      });
+      if (targetIdx === -1) {
+        result.push({
+          date: obj.date,
+          drink: +(obj.mom || 0) + +(obj.milk || 0),
+          pee_count: obj.pee.toString() ? obj.pee.toString().split(',').length : 0,
+          poop_count: obj.poop.toString() ? obj.poop.toString().split(',').length : 0,
+          note: +obj.slot_row === 25 ? obj.note : ''
+        });
+        return result;
+      }
+      result[targetIdx]['drink'] += +(obj.mom || 0) + +(obj.milk || 0);
+      result[targetIdx]['pee_count'] += obj.pee.toString() ? obj.pee.toString().split(',').length : 0;
+      result[targetIdx]['poop_count'] += obj.poop.toString() ? obj.poop.toString().split(',').length : 0;
+      result[targetIdx]['note'] = +obj.slot_row === 25 ? obj.note : '';
+      return result;
+    }, []);
+    result.forEach(function (item, idx) {
+      $('<tr>').html('<th>' + (result.length  - idx) + '</th>' +
+        '<th class="date-sheet__th">' + toDate(item.date) + '</th>' +
+        '<th>' + item.drink + '</th>' +
+        '<th>' + item.pee_count + '</th>' +
+        '<th>' + item.poop_count + '</th>' +
+        '<th>' + item.note + '</th>').prependTo($('.date-sheet__body'));
+    });
+  }
+
   function emitSearch() {
     var start = $('input[name=start]').val();
     var end = $('input[name=end]').val();
@@ -185,38 +220,7 @@
       /* close modal */
       $('.close').click();
 
-      /* table clear */
-      $('.date-sheet__body').empty();
-
-      /* insert data */
-      var result = res.reduce(function (result, obj) {
-        var targetIdx = result.findIndex(function (item) {
-          return item.date === obj.date;
-        });
-        if (targetIdx === -1) {
-          result.push({
-            date: obj.date,
-            drink: +(obj.mom || 0) + +(obj.milk || 0),
-            pee_count: obj.pee.toString() ? obj.pee.toString().split(',').length : 0,
-            poop_count: obj.poop.toString() ? obj.poop.toString().split(',').length : 0,
-            note: +obj.slot_row === 25 ? obj.note : ''
-          });
-          return result;
-        }
-        result[targetIdx]['drink'] += +(obj.mom || 0) + +(obj.milk || 0);
-        result[targetIdx]['pee_count'] += obj.pee.toString() ? obj.pee.toString().split(',').length : 0;
-        result[targetIdx]['poop_count'] += obj.poop.toString() ? obj.poop.toString().split(',').length : 0;
-        result[targetIdx]['note'] = +obj.slot_row === 25 ? obj.note : '';
-        return result;
-      }, []);
-      result.forEach(function (item, idx) {
-        $('<tr>').html('<th>' + (result.length  - idx) + '</th>' +
-          '<th>' + toDate(item.date) + '</th>' +
-          '<th>' + item.drink + '</th>' +
-          '<th>' + item.pee_count + '</th>' +
-          '<th>' + item.poop_count + '</th>' +
-          '<th>' + item.note + '</th>').prependTo($('.date-sheet__body'));
-      });
+      insertData(res);
     });
   }
 
@@ -231,8 +235,11 @@
     $('input[name=start]').attr('max', today);
     $('input[name=end]').attr('max', today);
     SheetModelImp.getSearchCondition(function (obj) {
-      $('input[name=start]').val(obj.start || '');
-      $('input[name=end]').val(obj.end || '');
+      if(obj.start && obj.end) {
+        $('input[name=start]').val(obj.start);
+        $('input[name=end]').val(obj.end);
+        SheetModelImp.getListByDateRange(obj.start, obj.end, insertData);
+      }
     });
   });
 </script>
