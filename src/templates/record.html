@@ -1,0 +1,238 @@
+<style>
+  .fast {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .fast__item {
+    padding: 10px 15px;
+    border: 2px solid #18a2b8;
+    margin: 2px;
+  }
+</style>
+<div class="main__content">
+  <button type="button" class="btn btn-primary" onclick="chooseDates();">選擇日期</button>
+  <div class="table-responsive main__table">
+    <table class="table date-sheet">
+      <thead class="thead-dark">
+      <tr>
+        <th class="date-sheet__th" scope="col">#</th>
+        <th class="date-sheet__th" scope="col">日期</th>
+        <th class="date-sheet__th" scope="col">喝奶總量</th>
+        <th class="date-sheet__th" scope="col">小便次數</th>
+        <th class="date-sheet__th" scope="col">大便次數</th>
+        <th class="date-sheet__th" scope="col">備註</th>
+      </tr>
+      </thead>
+      <tbody class="date-sheet__body">
+      <tr>
+        <td scope="row" colspan="6" align="center">
+          請選擇日期區間
+        </td>
+      </tr>
+      </tbody>
+      <tfoot>
+      <tr class="date-sheet__loading">
+        <td scope="row" colspan="6" align="center" class="date-sheet__loading__data">
+          <i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+        </td>
+      </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+<div class="modal fade" id="datePickModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">選擇查詢日期</h5>
+        <a class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </a>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="form-group">
+            <label>起始日</label>
+            <input type="date" class="form-control" name="start"/>
+            <div class="invalid-feedback">
+              請選擇日期
+            </div>
+          </div>
+          <div class="form-group">
+            <label>迄止日</label>
+            <input type="date" class="form-control" name="end"/>
+            <div class="invalid-feedback">
+              請選擇日期
+            </div>
+          </div>
+          <div class="form-group">
+            <label>快速查詢</label>
+            <div class="fast">
+              <button class="col bg-light text-secondary fast__item" onclick="fastSearch('twomonth');">
+                最近兩個月
+              </button>
+              <button class="col bg-light text-secondary fast__item" onclick="fastSearch('lastmonth');">
+                上個月
+              </button>
+              <button class="col bg-light text-secondary fast__item" onclick="fastSearch('thismonth');">
+                本月
+              </button>
+              <div class="w-100"></div>
+              <button class="col bg-light text-secondary fast__item" onclick="fastSearch('lastweek');">
+                最近一週
+              </button>
+              <button class="col bg-light text-secondary fast__item" onclick="fastSearch('yesterday');">
+                前一日
+              </button>
+              <button class="col bg-light text-secondary fast__item" onclick="fastSearch('today');">
+                今天
+              </button>
+            </div>
+          </div>
+          <div class="form-group">
+            <p class="text-danger server-message"></p>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">關閉</button>
+        <button type="button" class="btn btn-info" onclick="submitSearch();">確認</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  function fastSearch(type) {
+    var start = '',
+      end = '',
+      today = toDate(new Date());
+
+    switch (type) {
+      case 'twomonth':
+        start = moment().add(-2, 'months').format('YYYY-MM-01');
+        end = toDate(moment().add(-1, 'months').endOf('month'));
+        break;
+      case 'lastmonth':
+        start = moment().add(-1, 'months').format('YYYY-MM-01');
+        end = toDate(moment(start).endOf('month'));
+        break;
+      case 'thismonth':
+        start = moment().format('YYYY-MM-01');
+        end = today;
+        break;
+      case 'lastweek':
+        start = toDate(moment().day(-7));
+        end = toDate(moment().day(-7).add(6, 'days'));
+        break;
+      case 'yesterday':
+        start = end = toDate(moment().add(-1, 'days'));
+        break;
+      case 'today':
+        start = end = today;
+        break;
+    }
+    $('input[name=start]').val(start);
+    $('input[name=end]').val(end);
+    emitSearch();
+  }
+
+  function chooseDates() {
+    $('#datePickModal').modal('show');
+    $('#datePickModal').on('hidden.bs.modal', function () {
+      SheetModelImp.getSearchCondition(function (obj) {
+        $('input[name=start]').val(obj.start || '');
+        $('input[name=end]').val(obj.end || '');
+      });
+      $('.server-message').html('');
+      $('#datePickModal input, #datePickModal button').prop('disabled', false);
+    });
+  }
+
+  function validateDates() {
+    var start = $('input[name=start]').val();
+    var end = $('input[name=end]').val();
+
+    $('input[name=start]').toggleClass('is-invalid', !start);
+    $('input[name=end]').toggleClass('is-invalid', !end);
+
+    if (new Date(end).getTime() < new Date(start).getTime()) {
+      $('.server-message').html('迄止日不能小於起始日');
+      return false;
+    }
+
+    return start && end;
+  }
+
+  function submitSearch() {
+    if (!validateDates())
+      return false;
+    emitSearch();
+  }
+
+  function emitSearch() {
+    var start = $('input[name=start]').val();
+    var end = $('input[name=end]').val();
+
+    $('#datePickModal input, #datePickModal button').prop('disabled', true);
+    $('<i>').addClass('fa fa-spinner fa-pulse fa-3x fa-fw text-secondary').appendTo($('.server-message'));
+    /* validate */
+    SheetModelImp.getListByDateRange(start, end, function (res) {
+      if (typeof res !== 'object')
+        $('.server-message').html(res);
+
+      /* close modal */
+      $('.close').click();
+
+      /* table clear */
+      $('.date-sheet__body').empty();
+
+      /* insert data */
+      var result = res.reduce(function (result, obj) {
+        var targetIdx = result.findIndex(function (item) {
+          return item.date === obj.date;
+        });
+        if (targetIdx === -1) {
+          result.push({
+            date: obj.date,
+            drink: +(obj.mom || 0) + +(obj.milk || 0),
+            pee_count: obj.pee.toString() ? obj.pee.toString().split(',').length : 0,
+            poop_count: obj.poop.toString() ? obj.poop.toString().split(',').length : 0,
+            note: +obj.slot_row === 25 ? obj.note : ''
+          });
+          return result;
+        }
+        result[targetIdx]['drink'] += +(obj.mom || 0) + +(obj.milk || 0);
+        result[targetIdx]['pee_count'] += obj.pee.toString() ? obj.pee.toString().split(',').length : 0;
+        result[targetIdx]['poop_count'] += obj.poop.toString() ? obj.poop.toString().split(',').length : 0;
+        result[targetIdx]['note'] = +obj.slot_row === 25 ? obj.note : '';
+        return result;
+      }, []);
+      result.forEach(function (item, idx) {
+        $('<tr>').html('<th>' + (result.length  - idx) + '</th>' +
+          '<th>' + toDate(item.date) + '</th>' +
+          '<th>' + item.drink + '</th>' +
+          '<th>' + item.pee_count + '</th>' +
+          '<th>' + item.poop_count + '</th>' +
+          '<th>' + item.note + '</th>').prependTo($('.date-sheet__body'));
+      });
+    });
+  }
+
+  function toDate(date) {
+    return moment(date).format("YYYY-MM-DD");
+  }
+
+  $(function () {
+    var today = toDate(new Date());
+    $('input[name=start]').attr('min', '2018-11-12');
+    $('input[name=end]').attr('min', '2018-11-12');
+    $('input[name=start]').attr('max', today);
+    $('input[name=end]').attr('max', today);
+    SheetModelImp.getSearchCondition(function (obj) {
+      $('input[name=start]').val(obj.start || '');
+      $('input[name=end]').val(obj.end || '');
+    });
+  });
+</script>
