@@ -12,28 +12,25 @@
 </style>
 <div class="main__content">
   <button type="button" class="btn btn-primary" onclick="chooseDates();">選擇日期</button>
-  <div class="table-responsive main__table">
-    <table class="table date-sheet">
-      <thead class="thead-dark">
+  <div class="table-responsive main__table main__table--hidden">
+    <table class="table date-sheet table-striped">
+      <thead class="thead-dark date-sheet__head">
       <tr>
-        <th class="date-sheet__th" scope="col">#</th>
         <th class="date-sheet__th" scope="col">日期</th>
         <th class="date-sheet__th" scope="col">喝奶總量</th>
         <th class="date-sheet__th" scope="col">小便次數</th>
         <th class="date-sheet__th" scope="col">大便次數</th>
         <th class="date-sheet__th" scope="col">備註</th>
+        <th class="date-sheet__th" scope="col">特殊狀況</th>
+        <th class="date-sheet__th" scope="col">查看</th>
       </tr>
       </thead>
       <tbody class="date-sheet__body">
-      <tr>
-        <td scope="row" colspan="6" align="center">
-          請選擇日期區間
-        </td>
-      </tr>
+
       </tbody>
       <tfoot>
       <tr class="date-sheet__loading">
-        <td scope="row" colspan="6" align="center" class="date-sheet__loading__data">
+        <td scope="row" colspan="7" align="center" class="date-sheet__loading__data">
           <i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>
         </td>
       </tr>
@@ -171,7 +168,23 @@
     emitSearch();
   }
 
-  function insertData(res){
+  function insertData(res) {
+    function _stringToCount(strOrNum) {
+      return strOrNum.toString() ? strOrNum.toString().split(',').length : 0;
+    }
+
+    function _validMistake(pee, poop) {
+      var mistake = [];
+      pee.toString() && pee.toString().split(',').find(function (pe) {
+        return +pe !== 0;
+      }) && mistake.push('小便異常');
+      poop.toString() && poop.toString().split(',').find(function (po) {
+        return +po !== 0;
+      }) && mistake.push('大便異常');
+
+      return mistake;
+    }
+
     /* table clear */
     $('.date-sheet__body').empty();
 
@@ -180,29 +193,36 @@
       var targetIdx = result.findIndex(function (item) {
         return item.date === obj.date;
       });
+
       if (targetIdx === -1) {
         result.push({
           date: obj.date,
           drink: +(obj.mom || 0) + +(obj.milk || 0),
-          pee_count: obj.pee.toString() ? obj.pee.toString().split(',').length : 0,
-          poop_count: obj.poop.toString() ? obj.poop.toString().split(',').length : 0,
-          note: +obj.slot_row === 25 ? obj.note : ''
+          pee_count: _stringToCount(obj.pee),
+          poop_count: _stringToCount(obj.poop),
+          note: +obj.slot_row === 25 ? obj.note : '',
+          mistake: _validMistake(obj.pee, obj.poop)
         });
         return result;
       }
+
       result[targetIdx]['drink'] += +(obj.mom || 0) + +(obj.milk || 0);
-      result[targetIdx]['pee_count'] += obj.pee.toString() ? obj.pee.toString().split(',').length : 0;
-      result[targetIdx]['poop_count'] += obj.poop.toString() ? obj.poop.toString().split(',').length : 0;
+      result[targetIdx]['pee_count'] += _stringToCount(obj.pee);
+      result[targetIdx]['poop_count'] += _stringToCount(obj.poop);
       result[targetIdx]['note'] = +obj.slot_row === 25 ? obj.note : '';
+      result[targetIdx]['mistake'] = result[targetIdx]['mistake'].concat(_validMistake(obj.pee, obj.poop));
       return result;
     }, []);
     result.forEach(function (item, idx) {
-      $('<tr>').html('<th>' + (result.length  - idx) + '</th>' +
-        '<th class="date-sheet__th">' + toDate(item.date) + '</th>' +
-        '<th>' + item.drink + '</th>' +
-        '<th>' + item.pee_count + '</th>' +
-        '<th>' + item.poop_count + '</th>' +
-        '<th>' + item.note + '</th>').prependTo($('.date-sheet__body'));
+      $('<tr>').html(
+        '<td data-title="日期" class="date-sheet__no-wrap">' + toDate(item.date) + '</td>' +
+        '<td data-title="喝奶總量">' + item.drink + '</td>' +
+        '<td data-title="小便次數">' + item.pee_count + '</td>' +
+        '<td data-title="大便次數">' + item.poop_count + '</td>' +
+        '<td data-title="備註">' + (item.note || '無') + '</td>' +
+        '<td data-title="特殊狀況">' + (item.mistake.length === 0 ? '無' : item.mistake.join(',')) + '</td>'+
+        '<td data-title="查看"><button type="button" class="btn btn-info btn-sm">查看</button></td>'
+      ).prependTo($('.date-sheet__body'));
     });
   }
 
@@ -221,6 +241,9 @@
       $('.close').click();
 
       insertData(res);
+
+      /* display table */
+      $('.main__table').removeClass('main__table--hidden');
     });
   }
 
@@ -235,7 +258,7 @@
     $('input[name=start]').attr('max', today);
     $('input[name=end]').attr('max', today);
     SheetModelImp.getSearchCondition(function (obj) {
-      if(obj.start && obj.end) {
+      if (obj.start && obj.end) {
         $('input[name=start]').val(obj.start);
         $('input[name=end]').val(obj.end);
         SheetModelImp.getListByDateRange(obj.start, obj.end, insertData);
