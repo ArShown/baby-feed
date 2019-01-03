@@ -38,6 +38,13 @@
             </div>
           </div>
           <div class="form-group">
+            <p class="text-danger server-message"></p>
+          </div>
+          <div class="form-group">
+            <button type="button" class="btn btn-info btn-block" onclick="submitSearch();">確認</button>
+          </div>
+          <hr/>
+          <div class="form-group">
             <label>快速查詢</label>
             <div class="fast">
               <button class="col bg-light text-secondary fast__item" onclick="fastSearch('twomonth');">
@@ -61,19 +68,22 @@
               </button>
             </div>
           </div>
-          <div class="form-group">
-            <p class="text-danger server-message"></p>
-          </div>
         </form>
+        <div class="date-pick-loading text-secondary">
+          <i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+        </div>
       </div>
       <div class="modal-footer">
-        <div class="btn btn-secondary" data-dismiss="modal">關閉</div>
-        <button type="button" class="btn btn-info" onclick="submitSearch();">確認</button>
+        <div class="btn btn-secondary btn-block" data-dismiss="modal">關閉</div>
       </div>
     </div>
   </div>
 </div>
 <script>
+  function chooseDates() {
+    $('#datePickModal').modal('show');
+  }
+
   function fastSearch(type) {
     var start = '',
       end = '',
@@ -103,8 +113,8 @@
         start = end = today;
         break;
     }
-    $('input[name=start]').val(start);
-    $('input[name=end]').val(end);
+    $('input[name=start]').val(start).toggleClass('is-invalid', false);
+    $('input[name=end]').val(end).toggleClass('is-invalid', false);
     emitSearch();
   }
 
@@ -134,7 +144,7 @@
     var end = $('input[name=end]').val();
 
     $('#datePickModal input, #datePickModal button').prop('disabled', true);
-    $('<i>').addClass('fa fa-spinner fa-pulse fa-3x fa-fw text-secondary').appendTo($('.server-message'));
+    $('.date-pick-loading').toggleClass('date-pick-loading--show', true);
     /* validate */
     SheetModelImp.getListByDateRange(start, end, function (res) {
       if (typeof res !== 'object')
@@ -176,6 +186,9 @@
         $('input[name=end]').val(obj.end || '');
       });
       $('.server-message').html('');
+      $('.date-pick-loading').toggleClass('date-pick-loading--show', false);
+      $('input[name=start]').toggleClass('is-invalid', false);
+      $('input[name=end]').toggleClass('is-invalid', false);
       $('#datePickModal input, #datePickModal button').prop('disabled', false);
     });
   });

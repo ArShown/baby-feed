@@ -30,10 +30,6 @@
 <div id="detail-modal"></div>
 
 <script>
-  function chooseDates() {
-    $('#datePickModal').modal('show');
-  }
-
   function insertData(res) {
     function _stringToCount(strOrNum) {
       return strOrNum.toString() ? strOrNum.toString().split(',').length : 0;
@@ -99,10 +95,6 @@
       $('<td>').attr('data-title','查看').html(btn).appendTo(row);
       row.prependTo($('.date-sheet__body'));
     });
-  }
-
-  function showDetail(detail) {
-    console.log(detail);
   }
 
   $(function () {
