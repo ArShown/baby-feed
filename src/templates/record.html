@@ -97,6 +97,10 @@
     });
   }
 
+  function toDate(date) {
+    return moment(date).format("YYYY-MM-DD");
+  }
+
   $(function () {
     $('#search-modal').load('src/templates/record.search-modal.html');
     $('#detail-modal').load('src/templates/record.detail-modal.html');

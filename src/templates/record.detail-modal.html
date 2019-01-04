@@ -1,24 +1,193 @@
+<style>
+  .detail-list-responsive {
+    display: flex;
+    overflow: scroll;
+  }
+
+  .detail-list--fixed {
+    position: fixed;
+    background-color: #fff;
+    width: 100px;
+  }
+
+  .detail-list--frame {
+    display: flex;
+    padding-left: 100px;
+  }
+
+  .detail-list__column {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #ccc;
+    flex-grow: 0;
+    flex-shrink: 0;
+  }
+
+  .detail-list__column--80 {
+    flex-basis: 100px;
+  }
+
+  .detail-list__column--130 {
+    flex-basis: 130px;
+  }
+
+  .detail-list__head {
+    padding: .3rem 1rem;
+    color: #fff;
+    background-color: #212529;
+    text-align: center;
+  }
+
+  .detail-list__data {
+    min-height: 2rem;
+    border-bottom: 1px solid #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+  }
+
+</style>
 <div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel"
      aria-hidden="true">
-  <div class="modal-dialog" role="document">
+  <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="detailModalLabel">date</h5>
+        <h5 class="modal-title" id="detailModalLabel"></h5>
         <button class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
       <div class="modal-body">
-
+        <div class="detail-list-responsive">
+          <div class="detail-list--fixed detail-list__column">
+            <div class="detail-list__head">時段</div>
+            <div class="detail-list__slot-list"></div>
+          </div>
+          <div class="detail-list--frame">
+            <div class="detail-list__column detail-list__column--130">
+              <div class="detail-list__head">餵奶時間</div>
+              <div class="detail-list__body detail-list__feed-time"></div>
+            </div>
+            <div class="detail-list__column detail-list__column--80">
+              <div class="detail-list__head">母奶</div>
+              <div class="detail-list__body detail-list__mom"></div>
+            </div>
+            <div class="detail-list__column detail-list__column--80">
+              <div class="detail-list__head">配方奶</div>
+              <div class="detail-list__body detail-list__milk"></div>
+            </div>
+            <div class="detail-list__column">
+              <div class="detail-list__head">小便次數</div>
+              <div class="detail-list__body detail-list__pee-count"></div>
+            </div>
+            <div class="detail-list__column">
+              <div class="detail-list__head">小便狀態</div>
+              <div class="detail-list__body detail-list__pee-status"></div>
+            </div>
+            <div class="detail-list__column">
+              <div class="detail-list__head">大便次數</div>
+              <div class="detail-list__body detail-list__poop-count"></div>
+            </div>
+            <div class="detail-list__column">
+              <div class="detail-list__head">大便狀態</div>
+              <div class="detail-list__body detail-list__poop-status"></div>
+            </div>
+            <div class="detail-list__column">
+              <div class="detail-list__head">備註</div>
+              <div class="detail-list__body detail-list__note"></div>
+            </div>
+          </div>
+        </div>
+        <div class="date-pick-loading text-secondary">
+          <i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+        </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">關閉</button>
+        <button type="button" class="btn btn-secondary btn-block" data-dismiss="modal">關閉</button>
       </div>
     </div>
   </div>
 </div>
 <script>
-  function showDetail(detail) {
-    $('#detailModal').modal('show');
+  function displayTime(num) {
+    if (num === '') return '????';
+    if (parseInt(num) === 'NaN') return num;
+    return +num < 1000 ? '0' + num : num.toString();
   }
+
+  function showDetail(detail) {
+    $('#detailModalLabel').html(toDate(detail[0]['date']));
+    $('#detailModal').modal('show');
+    $('#detailModal .date-pick-loading').toggleClass('date-pick-loading--show', true);
+    SheetModelImp.getSlots(function (res) {
+      $('#detailModal .date-pick-loading').toggleClass('date-pick-loading--show', false);
+      console.log(detail);
+      res.forEach(function (slot, idx) {
+        if (idx === 24)
+          return true;
+        $('<div>').addClass('detail-list__data').html(slot).appendTo($('.detail-list__slot-list'));
+
+        var target = detail.find(function (item) {
+          return item.slot_row === (idx + 1);
+        });
+        /* 餵奶時間 */
+        $('<div>').
+        addClass('detail-list__data').
+        html(target && target.feed_start ? displayTime(target.feed_start) + '~' + displayTime(target.feed_end) : '').
+        appendTo($('.detail-list__feed-time'));
+        /* 母奶 */
+        $('<div>').
+        addClass('detail-list__data').
+        html(target && target.mom).
+        appendTo($('.detail-list__mom'));
+        /* 配方奶 */
+        $('<div>').
+        addClass('detail-list__data').
+        html(target && target.milk).
+        appendTo($('.detail-list__milk'));
+        /* 小便次數 */
+        var pee = target && target.pee.toString() !== '' ? target.pee.toString().split(',') : [];
+        $('<div>').
+        addClass('detail-list__data').
+        html(pee.length || '').
+        appendTo($('.detail-list__pee-count'));
+        /* 小便狀態 */
+        $('<div>').
+        addClass('detail-list__data').
+        html(pee.map(function (status) {
+          return PEE_TEXT[status];
+        }).join(',')).
+        appendTo($('.detail-list__pee-status'));
+        /* 大便次數 */
+        var poop = target && target.poop.toString() !== '' ? target.poop.toString().split(',') : [];
+        $('<div>').
+        addClass('detail-list__data').
+        html(poop.length || '').
+        appendTo($('.detail-list__poop-count'));
+        /* 大便狀態 */
+        $('<div>').
+        addClass('detail-list__data').
+        html(poop.map(function (status) {
+          return POOP_TEXT[status];
+        }).join(',')).
+        appendTo($('.detail-list__poop-status'));
+        /* 備註 */
+        $('<div>').
+        addClass('detail-list__data').
+        html(target && target.note).
+        appendTo($('.detail-list__note'));
+      });
+    });
+  }
+
+  $(function () {
+    $('#datePickModal').on('hide.bs.modal', SheetModelImp.cancel);
+
+    $('#detailModal').on('hidden.bs.modal', function () {
+      $('#detailModalLabel').html('');
+      $('.detail-list__slot-list').empty();
+      $('.detail-list__body').empty();
+    });
+  });
 </script>

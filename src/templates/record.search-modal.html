@@ -144,7 +144,7 @@
     var end = $('input[name=end]').val();
 
     $('#datePickModal input, #datePickModal button').prop('disabled', true);
-    $('.date-pick-loading').toggleClass('date-pick-loading--show', true);
+    $('#datePickModal .date-pick-loading').toggleClass('date-pick-loading--show', true);
     /* validate */
     SheetModelImp.getListByDateRange(start, end, function (res) {
       if (typeof res !== 'object')
@@ -158,10 +158,6 @@
       /* display table */
       $('.main__table').removeClass('main__table--hidden');
     });
-  }
-
-  function toDate(date) {
-    return moment(date).format("YYYY-MM-DD");
   }
 
   $(function () {
@@ -186,7 +182,7 @@
         $('input[name=end]').val(obj.end || '');
       });
       $('.server-message').html('');
-      $('.date-pick-loading').toggleClass('date-pick-loading--show', false);
+      $('#datePickModal .date-pick-loading').toggleClass('date-pick-loading--show', false);
       $('input[name=start]').toggleClass('is-invalid', false);
       $('input[name=end]').toggleClass('is-invalid', false);
       $('#datePickModal input, #datePickModal button').prop('disabled', false);
