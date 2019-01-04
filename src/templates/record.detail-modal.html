@@ -188,12 +188,28 @@
 
   $(function () {
     $('#detailModal').on('show.bs.modal', function () {
-      $('body').css('position', 'fixed');
+      var _this = $(this);
+      var startY = endY = scrollTopY = 0;
+      var body = $('body');
+      body.on('touchstart', function (event) {
+        var touch = event.targetTouches[0];
+        startY = touch.pageY;
+        scrollTopY = _this.scrollTop();
+      });
+      body.on("touchmove", function (event) {
+        var touch = event.targetTouches[0];
+        endY = touch.pageY;
+        _this.scrollTop(scrollTopY - parseInt(endY - startY));
+      });
+      body.on("touchend", function (event) {
+        scrollTopY = _this.scrollTop();
+      });
     });
 
     $('#detailModal').on('hide.bs.modal', function () {
       SheetModelImp.cancel();
-      $('body').css('position', 'relative');
+      $('body').off('touchstart');
+      $('body').off('touchmove');
     });
 
     $('#detailModal').on('hidden.bs.modal', function () {
