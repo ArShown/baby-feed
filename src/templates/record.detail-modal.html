@@ -1,18 +1,26 @@
 <style>
   .detail-list-responsive {
     display: flex;
-    overflow: scroll;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    position: relative;
+    max-height: 70vh;
   }
 
   .detail-list--fixed {
-    position: fixed;
+    position: absolute;
     background-color: #fff;
     width: 100px;
+    z-index: 2;
   }
 
   .detail-list--frame {
     display: flex;
+    height: 100%;
     padding-left: 100px;
+    position: relative;
+    width: 100%;
+    overflow-x: auto;
   }
 
   .detail-list__column {
@@ -187,25 +195,6 @@
   }
 
   $(function () {
-    $('#detailModal').on('show.bs.modal', function () {
-      var _this = $(this);
-      var startY = endY = scrollTopY = 0;
-      var body = $('body');
-      body.on('touchstart', function (event) {
-        var touch = event.targetTouches[0];
-        startY = touch.pageY;
-        scrollTopY = _this.scrollTop();
-      });
-      body.on("touchmove", function (event) {
-        var touch = event.targetTouches[0];
-        endY = touch.pageY;
-        _this.scrollTop(scrollTopY - parseInt(endY - startY));
-      });
-      body.on("touchend", function (event) {
-        scrollTopY = _this.scrollTop();
-      });
-    });
-
     $('#detailModal').on('hide.bs.modal', function () {
       SheetModelImp.cancel();
       $('body').off('touchstart');
