@@ -13,7 +13,7 @@
         <div class="feed-start" onclick="startToFeed();">
           開始餵奶
         </div>
-        <div class="feed-end feed-status--hide" onClick="loadPage(this, 'feed-done');">
+        <div class="feed-end feed-status--hide" onclick="loadPage(this, 'feed-done');">
           結束餵奶
         </div>
       </div>
@@ -25,12 +25,12 @@
     </div>
     <div class="main__menu__box">
       <div class="main__menu__item">
-        <div class="menu-box menu-box--disabled" onClick="loadPage(this, '');">
+        <div class="menu-box" onclick="choosePee();">
           小便
         </div>
       </div>
       <div class="main__menu__item">
-        <div class="menu-box menu-box--disabled" onClick="loadPage(this, '');">
+        <div class="menu-box" onclick="choosePoop();">
           大便
         </div>
       </div>
@@ -38,32 +38,54 @@
   </div>
   <div class="main__menu__box">
     <div class="main__menu__item">
-      <div class="menu-box menu-box--disabled" onClick="loadPage(this, '');">
+      <div class="menu-box menu-box--disabled" onclick="loadPage(this, '');">
         備註
       </div>
     </div>
     <div class="main__menu__item ">
-      <div class="menu-box" onClick="loadPage(this, 'news');">
+      <div class="menu-box" onclick="loadPage(this, 'news');">
         動態消息
       </div>
     </div>
   </div>
 </div>
+<div class="modal fade" id="choose-modal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+
+  </div>
+</div>
 <script>
-  function startToFeed() {
-    loading(true);
+  function createData(callback) {
     var hours = +(moment().format('H'));
     var date = moment().format('YYYY-MM-DD');
     var slot_row = hours === 0 ? 24 : (hours + 1);
-    var start = moment().format('HHmm');
+    callback(date, slot_row);
+  }
 
-    SheetModelImp.insertRecord({
-      date: date,
-      slot_row: slot_row,
-      feed_start: start
-    }, function (res) {
-      fetchLastFeed().then(function () {
-        loading(false);
+  function choosePee() {
+    $('#choose-modal .modal-dialog').load('admin/templates/pee.dialog.html', function () {
+      $('#choose-modal').modal('show');
+    });
+  }
+
+  function choosePoop(){
+    $('#choose-modal .modal-dialog').load('admin/templates/poop.dialog.html', function () {
+      $('#choose-modal').modal('show');
+    });
+  }
+
+  function startToFeed() {
+    loading(true);
+    createData(function (date, slot_row) {
+      var start = moment().format('HHmm');
+      SheetModelImp.insertRecord({
+        date: date,
+        slot_row: slot_row,
+        feed_start: start
+      }, function (res) {
+        fetchLastFeed().then(function () {
+          loading(false);
+        });
       });
     });
   }

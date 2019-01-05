@@ -1,0 +1,45 @@
+<div class="modal-content">
+  <div class="modal-header">
+    <h5 class="modal-title">大便狀態</h5>
+    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  <div class="modal-body">
+    <form class="poop-form">
+    </form>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-info btn-block" onclick="poopStatusSubmit();">確認</button>
+  </div>
+</div>
+<script>
+  function poopStatusSubmit() {
+    loading(true);
+    createData(function (date, slot_row) {
+      SheetModelImp.insertRecord({
+        date: date,
+        slot_row: slot_row,
+        poop: ''+$('.poop-form input[name=poop]:checked').val()
+      }, function (res) {
+        $('.close').click();
+        loading(false);
+      });
+    });
+  }
+
+  $(function () {
+    POOP_TEXT.forEach(function (txt, idx) {
+      var input = $('<input>').addClass('form-check-input').attr({
+        type: 'radio',
+        name: 'poop',
+        value: idx,
+        id: 'poopStatus-' + idx
+      }).prop('checked', idx === 0);
+      var label = $('<label>').addClass('form-check-label').attr({
+        for: 'poopStatus-' + idx
+      }).html(txt);
+      $('<div>').addClass('form-check form-check-inline').append([input, label]).appendTo($('.poop-form'));
+    });
+  });
+</script>
