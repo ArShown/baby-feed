@@ -1,27 +1,113 @@
+<style>
+  .feed-status--hide {
+    display: none;
+  }
+</style>
 <div class="main__menu">
-  <div class="main__menu__item">
-    <div class="menu-box menu-box--disabled" onClick="loadPage(this, '');">
-      小便
+  <div class="main__menu__box main__menu__box--h">
+    <div class="main__menu__item--full menu-box__message">
+      上次餵奶時間：<span class="last-feed-start">????</span>~<span class="last-feed-end">????</span>
+    </div>
+    <div class="main__menu__item main__menu__item--full">
+      <div class="menu-box">
+        <div class="feed-start" onclick="startToFeed();">
+          開始餵奶
+        </div>
+        <div class="feed-end feed-status--hide" onClick="loadPage(this, 'feed-done');">
+          結束餵奶
+        </div>
+      </div>
     </div>
   </div>
-  <div class="main__menu__item">
-    <div class="menu-box menu-box--disabled" onClick="loadPage(this, '');">
-      大便
+  <div class="main__menu__box main__menu__box--h">
+    <div class="main__menu__item--full menu-box__message">
+      上次尿布更換時段：<span class="last-change">??</span>
+    </div>
+    <div class="main__menu__box">
+      <div class="main__menu__item">
+        <div class="menu-box menu-box--disabled" onClick="loadPage(this, '');">
+          小便
+        </div>
+      </div>
+      <div class="main__menu__item">
+        <div class="menu-box menu-box--disabled" onClick="loadPage(this, '');">
+          大便
+        </div>
+      </div>
     </div>
   </div>
-  <div class="main__menu__item">
-    <div class="menu-box menu-box--disabled" onClick="loadPage(this, '');">
-      餵奶
+  <div class="main__menu__box">
+    <div class="main__menu__item">
+      <div class="menu-box menu-box--disabled" onClick="loadPage(this, '');">
+        備註
+      </div>
     </div>
-  </div>
-  <div class="main__menu__item">
-    <div class="menu-box menu-box--disabled" onClick="loadPage(this, '');">
-      備註
-    </div>
-  </div>
-  <div class="main__menu__item main__menu__item--full">
-    <div class="menu-box" onClick="loadPage(this, 'news');">
-      動態消息
+    <div class="main__menu__item ">
+      <div class="menu-box" onClick="loadPage(this, 'news');">
+        動態消息
+      </div>
     </div>
   </div>
 </div>
+<script>
+  function startToFeed() {
+    loading(true);
+    var hours = +(moment().format('H'));
+    var date = moment().format('YYYY-MM-DD');
+    var slot_row = hours === 0 ? 24 : (hours + 1);
+    var start = moment().format('HHmm');
+
+    SheetModelImp.insertRecord({
+      date: date,
+      slot_row: slot_row,
+      feed_start: start
+    }, function (res) {
+      fetchLastFeed().then(function () {
+        loading(false);
+      });
+    });
+  }
+
+  function fetchLastFeed() {
+    return new Promise(function (resolve) {
+      SheetModelImp.getLastFeed(function (res) {
+        var start = res.feed_start;
+        var end = res.feed_end;
+        $('.last-feed-start').html(start);
+        $('.last-feed-end').html(end || '????');
+
+        /* 尚未餵完 */
+        if (end !== '') {
+          $('.feed-start').toggleClass('feed-status--hide', false);
+          $('.feed-end').toggleClass('feed-status--hide', true);
+        } else {
+          $('.feed-start').toggleClass('feed-status--hide', true);
+          $('.feed-end').toggleClass('feed-status--hide', false);
+        }
+
+        resolve();
+      });
+    });
+  }
+
+  function fetchLastChange() {
+    return new Promise(function (resolve) {
+      SheetModelImp.getSlots(function (slots) {
+        SheetModelImp.getLastChange(function (res) {
+          $('.last-change').html(slots[res.slot_row - 1]);
+          resolve();
+        });
+      });
+    });
+  }
+
+  $(function () {
+    loading(true);
+    var lastChangePromise = fetchLastChange();
+    var lastFeedPromise = fetchLastFeed();
+
+    Promise.all([lastChangePromise, lastFeedPromise]).then(function () {
+      loading(false);
+    });
+  });
+</script>

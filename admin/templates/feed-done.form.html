@@ -1,0 +1,106 @@
+<div class="container">
+  <div class="page-title">結束餵奶</div>
+  <form class="feed-form">
+    <div class="form-group">
+      <label>開始餵奶時間</label>
+      <input type="tel" class="form-control feed-start" disabled/>
+    </div>
+    <div class="form-group">
+      <label>結束時間*</label>
+      <input type="tel" name="end" class="form-control"/>
+      <div class="invalid-feedback">
+        請輸入時間
+      </div>
+    </div>
+    <div class="form-group row">
+      <div class="col">
+        <label>母奶</label>
+        <input type="tel" name="mom" class="form-control"/>
+      </div>
+      <div class="col">
+        <label>配方奶</label>
+        <input type="tel" name="milk" class="form-control"/>
+      </div>
+    </div>
+    <p class="server-message text-danger"></p>
+    <div class="btn btn-info btn-block submit-record-btn">送出</div>
+    <hr/>
+    <div class="btn btn-outline-danger btn-block remove-record-btn">重設</div>
+    <p class="text-danger">
+      **誤按到<b>開始餵奶</b>可點擊重設，刪除此紀錄
+    </p>
+  </form>
+</div>
+<script>
+  function validateReset() {
+    var end = $('input[name=end]');
+    var mom = $('input[name=mom]');
+    var milk = $('input[name=milk]');
+    end.toggleClass('is-invalid', false);
+    mom.toggleClass('is-invalid', false);
+    milk.toggleClass('is-invalid', false);
+    $('.server-message').html('');
+  }
+
+  function validate() {
+    validateReset();
+    var end = $('input[name=end]');
+    var mom = $('input[name=mom]');
+    var milk = $('input[name=milk]');
+    var valid = true;
+    if (end.val().trim() === '') {
+      valid = false;
+      end.addClass('is-invalid');
+    }
+    if (mom.val().trim() === '' && milk.val().trim() === '') {
+      valid = false;
+      mom.addClass('is-invalid');
+      milk.addClass('is-invalid');
+      $('.server-message').html('「母奶」「配方奶」至少要填一項');
+    }
+    return valid;
+  }
+
+  function submitRecord(res) {
+    return function () {
+      if (!validate()) return false;
+
+      loading(true);
+      var end = $('input[name=end]').val().trim();
+      var mom = $('input[name=mom]').val().trim();
+      var milk = $('input[name=milk]').val().trim();
+      SheetModelImp.updateRecord(Object.assign(res, {
+        feed_end: end,
+        mom: mom,
+        milk: milk
+      }), backToHome);
+    };
+  }
+
+  function removeRecord(res) {
+    return function () {
+      if (confirm('記錄刪除無法回復，確定要刪除嗎？')) {
+        loading(true);
+        if (res.pee.toString() || res.poop.toString() || res.note.toString())
+          SheetModelImp.updateRecord(Object.assign(res, {
+            feed_start: ''
+          }), backToHome);
+        else
+          SheetModelImp.removeRecord(res.row, backToHome);
+      }
+      return false;
+    };
+  }
+
+  $(function () {
+    loading(true);
+    SheetModelImp.getLastFeed(function (res) {
+      var start = res.feed_start;
+      $('.feed-form .feed-start').val(start);
+      $('.feed-form input[name=end]').val(moment().format('HHmm'));
+      $('.submit-record-btn').click(submitRecord(res));
+      $('.remove-record-btn').click(removeRecord(res));
+      loading(false);
+    });
+  });
+</script>
