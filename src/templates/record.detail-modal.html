@@ -57,7 +57,6 @@
     justify-content: center;
     padding: 0 5px;
   }
-
 </style>
 <div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel"
      aria-hidden="true">
@@ -127,6 +126,10 @@
     return +num < 1000 ? '0' + num : num.toString();
   }
 
+  function setDataClass(hasMistake) {
+    return hasMistake ? 'detail-list__data bg-warning' : 'detail-list__data';
+  }
+
   function showDetail(detail) {
     $('#detailModalLabel').html(toDate(detail[0]['date']));
     $('#detailModal').modal('show');
@@ -144,50 +147,56 @@
           var target = detail.find(function (item) {
             return item.slot_row === (idx + 1);
           });
+          var pee = target && target.pee.toString() !== '' ? target.pee.toString().split(',') : [];
+          var poop = target && target.poop.toString() !== '' ? target.poop.toString().split(',') : [];
+          var peeMistake = pee.find(function (value) {
+            return parseInt(value) !== 0;
+          });
+          var poopMistake = poop.find(function (value) {
+            return parseInt(value) !== 0;
+          });
+          var hasMistake = peeMistake || poopMistake;
           /* 餵奶時間 */
-          $('<div>').
-          addClass('detail-list__data').
+          $('<div>').addClass(setDataClass(hasMistake)).
           html(target && target.feed_start ? displayTime(target.feed_start) + '~' + displayTime(target.feed_end) : '').
           appendTo($('.detail-list__feed-time'));
           /* 母奶 */
           $('<div>').
-          addClass('detail-list__data').
+          addClass(setDataClass(hasMistake)).
           html(target && target.mom).
           appendTo($('.detail-list__mom'));
           /* 配方奶 */
           $('<div>').
-          addClass('detail-list__data').
+          addClass(setDataClass(hasMistake)).
           html(target && target.milk).
           appendTo($('.detail-list__milk'));
           /* 小便次數 */
-          var pee = target && target.pee.toString() !== '' ? target.pee.toString().split(',') : [];
           $('<div>').
-          addClass('detail-list__data').
+          addClass(setDataClass(hasMistake)).
           html(pee.length || '').
           appendTo($('.detail-list__pee-count'));
           /* 小便狀態 */
           $('<div>').
-          addClass('detail-list__data').
+          addClass(setDataClass(hasMistake) + (peeMistake ? ' text-danger' : '')).
           html(pee.map(function (status) {
             return PEE_TEXT[status];
           }).join(',')).
           appendTo($('.detail-list__pee-status'));
           /* 大便次數 */
-          var poop = target && target.poop.toString() !== '' ? target.poop.toString().split(',') : [];
           $('<div>').
-          addClass('detail-list__data').
+          addClass(setDataClass(hasMistake)).
           html(poop.length || '').
           appendTo($('.detail-list__poop-count'));
           /* 大便狀態 */
           $('<div>').
-          addClass('detail-list__data').
+          addClass(setDataClass(hasMistake) + (poopMistake ? ' text-danger' : '')).
           html(poop.map(function (status) {
             return POOP_TEXT[status];
           }).join(',')).
           appendTo($('.detail-list__poop-status'));
           /* 備註 */
           $('<div>').
-          addClass('detail-list__data').
+          addClass(setDataClass(hasMistake)).
           html(target && target.note).
           appendTo($('.detail-list__note'));
         });
