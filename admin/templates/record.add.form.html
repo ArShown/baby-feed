@@ -30,8 +30,9 @@
   }
 
   $(function () {
-    $('.record-form').load('admin/templates/record.form.html',function(){
-      $('.date-input').val(moment().format('YYYY-MM-DD'));
+    $('.record-form').load('admin/templates/record.form.html', function () {
+      $(this).find('.date-input').val(moment().format('YYYY-MM-DD'));
+      $(this).find('.slot-select').data('defaultValue', +(moment().format('H')) + 1);
     });
   });
 </script>

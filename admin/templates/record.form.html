@@ -163,9 +163,14 @@
     Promise.all([getSlotPromise(), getNotesPromise()]).
     then(function (promises) {
       var [slots, notes] = promises;
-
+      var defaultValue = $('.slot-select').data('defaultValue');
       slots.forEach(function (txt, idx) {
-        $('<option>').attr('value', idx + 1).html(txt).appendTo($('.slot-select'));
+        var value = idx + 1;
+        $('<option>').
+        attr('value', value).
+        prop('selected', defaultValue === value).
+        html(txt).
+        appendTo($('.slot-select'));
       });
 
       notes.forEach(function (txt) {

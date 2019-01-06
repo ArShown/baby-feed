@@ -95,8 +95,8 @@
       SheetModelImp.getLastFeed(function (res) {
         var start = res.feed_start;
         var end = res.feed_end;
-        $('.last-feed-start').html(start);
-        $('.last-feed-end').html(end || '????');
+        $('.last-feed-start').html(displayTime(start));
+        $('.last-feed-end').html(displayTime(end));
 
         /* 尚未餵完 */
         if (end !== '') {

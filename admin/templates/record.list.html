@@ -49,12 +49,6 @@
     });
   }
 
-  function displayTime(num) {
-    if (num === '') return '????';
-    if (parseInt(num) === 'NaN') return num;
-    return +num < 1000 ? '0' + num : num.toString();
-  }
-
   function _stringToCount(strOrNum) {
     return strOrNum.toString() ? strOrNum.toString().split(',').length : 0;
   }

@@ -96,7 +96,7 @@
     loading(true);
     SheetModelImp.getLastFeed(function (res) {
       var start = res.feed_start;
-      $('.feed-form .feed-start').val(start);
+      $('.feed-form .feed-start').val(displayTime(start));
       $('.feed-form input[name=end]').val(moment().format('HHmm'));
       $('.submit-record-btn').click(submitRecord(res));
       $('.remove-record-btn').click(removeRecord(res));

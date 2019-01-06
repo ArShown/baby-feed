@@ -18,16 +18,16 @@
 
 <script>
   function updateSubmit() {
-    //    if (!formValidate())
-    //      return false;
-    //    loading(true);
-    //    var data = formSerialize();
-    //    SheetModelImp.updateRecord(data, function () {
-    //      if ($('#date-input').val() === data.date)
-    //        fetchRecord();
-    //      loading(false);
-    //      $('#form-modal').modal('hide');
-    //    });
+    if (!formValidate())
+      return false;
+    loading(true);
+    var data = formSerialize();
+    SheetModelImp.updateRecord(data, function () {
+      if ($('#date-input').val() === data.date)
+        fetchRecord();
+      loading(false);
+      $('#form-modal').modal('hide');
+    });
   }
 
   function deleteSubmit() {
@@ -47,7 +47,27 @@
     $('.record-form').load('admin/templates/record.form.html', function () {
       var data = $('.slot-list .record-item__modify').data('data');
       $(this).find('input[name=row]').val(data.row);
-      $(this).find('input[name=date]').val(moment(data.date).format('YYYY-MM-DD'));
+      $(this).find('input[name=date]').attr('readonly', true).val(moment(data.date).format('YYYY-MM-DD'));
+      $(this).find('.slot-select').attr('disabled', true).data('defaultValue', data.slot_row);
+      $(this).find('input[name=feed_start]').val((data.feed_start !== '') ? displayTime(data.feed_start) : '');
+      $(this).find('input[name=feed_end]').val((data.feed_end !== '') ? displayTime(data.feed_end) : '');
+      $(this).find('input[name=mom]').val(data.mom);
+      $(this).find('input[name=milk]').val(data.milk);
+      $(this).find('textarea[name=note]').val(data.note);
+      if (data.pee.toString() !== '') {
+        data.pee.toString().split(',').forEach(function (value) {
+          $('<li>').data('value', +value).html(PEE_TEXT[value]).click(function () {
+            $(this).remove();
+          }).appendTo($('.pee-add-list'));
+        });
+      }
+      if (data.poop.toString() !== '') {
+        data.poop.toString().split(',').forEach(function (value) {
+          $('<li>').data('value', +value).html(POOP_TEXT[value]).click(function () {
+            $(this).remove();
+          }).appendTo($('.poop-add-list'));
+        });
+      }
     });
   });
 </script>
