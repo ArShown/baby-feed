@@ -1,0 +1,189 @@
+<style>
+  .text-list {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .text-list__item {
+    padding: .5rem 1rem;
+    font-size: 1rem;
+    font-weight: 400;
+    margin: .3rem;
+  }
+</style>
+<form>
+  <input type="hidden" name="row"/>
+  <div class="form-group">
+    <label>日期*</label>
+    <input type="date" name="date" class="date-input form-control"/>
+    <div class="invalid-feedback">
+      請選擇日期
+    </div>
+  </div>
+  <div class="form-group">
+    <label>時段*</label>
+    <select class="form-control slot-select" name="slot_row"></select>
+  </div>
+  <div class="form-group row">
+    <div class="col">
+      <label>開始餵奶</label>
+      <input type="tel" name="feed_start" class="form-control"/>
+    </div>
+    <div class="col">
+      <label>結束餵奶</label>
+      <input type="tel" name="feed_end" class="form-control"/>
+    </div>
+  </div>
+  <div class="form-group row">
+    <div class="col">
+      <label>母奶</label>
+      <input type="tel" name="mom" class="form-control"/>
+    </div>
+    <div class="col">
+      <label>配方奶</label>
+      <input type="tel" name="milk" class="form-control"/>
+    </div>
+  </div>
+  <div class="form-group">
+    <label>小便</label>
+    <div class="input-group">
+      <select class="custom-select pee-list">
+
+      </select>
+      <div class="input-group-append">
+        <button class="btn btn-outline-secondary" type="button" onclick="addPee();">添加</button>
+      </div>
+    </div>
+    <ol class="pee-add-list">
+
+    </ol>
+  </div>
+  <div class="form-group">
+    <label>大便</label>
+    <div class="input-group">
+      <select class="custom-select poop-list">
+
+      </select>
+      <div class="input-group-append">
+        <button class="btn btn-outline-secondary" type="button" onclick="addPoop();">添加</button>
+      </div>
+    </div>
+    <ol class="poop-add-list">
+
+    </ol>
+  </div>
+  <div class="form-group">
+    <label>備註</label>
+    <textarea name="note" class="form-control note-textarea" cols="5"></textarea>
+    <div class="text-list notes-list">
+    </div>
+  </div>
+  <div class="valid-message text-danger"></div>
+</form>
+<script>
+  function formValidate() {
+    var data = formSerialize();
+    $('.is-invalid').removeClass('is-invalid');
+    if (
+      data.feed_start ||
+      data.feed_end ||
+      data.mom ||
+      data.milk ||
+      data.pee ||
+      data.poop ||
+      data.note
+    ) {
+      if (data.feed_start && data.feed_end && data.mom === '' && data.milk === '') {
+        $('input[name="mom"], input[name="milk"]').addClass('is-invalid');
+        $('.valid-message').html('請填寫奶量');
+        return false;
+      }
+      if ((data.feed_start === '' || data.feed_end === '') && ( data.mom || data.milk )) {
+        $('input[name="feed_start"], input[name="feed_end"]').addClass('is-invalid');
+        $('.valid-message').html('請填寫餵奶時間');
+        return false;
+      }
+    } else {
+      $('.valid-message').html('至少填寫一項事件');
+      return false;
+    }
+    return true;
+  }
+
+  function formSerialize() {
+    var row = $('input[name="row"]').val();
+    var date = $('input[name="date"]').val();
+    var slot_row = $('select[name="slot_row"]').val();
+    var feed_start = $('input[name="feed_start"]').val();
+    var feed_end = $('input[name="feed_end"]').val();
+    var mom = $('input[name="mom"]').val();
+    var milk = $('input[name="milk"]').val();
+    var note = $('textarea[name="note"]').val();
+    var pee = $('.pee-add-list li').map(function () {
+      return $(this).data('value');
+    }).get().join(',');
+    var poop = $('.poop-add-list li').map(function () {
+      return $(this).data('value');
+    }).get().join(',');
+
+    return {
+      row: row,
+      date: date,
+      slot_row: slot_row,
+      feed_start: feed_start,
+      feed_end: feed_end,
+      mom: mom,
+      milk: milk,
+      pee: pee,
+      poop: poop,
+      note: note
+    };
+  }
+
+  function addPee() {
+    var selected = $('.pee-list option:selected');
+    $('<li>').data('value', selected.attr('value')).html(selected.html()).click(function () {
+      $(this).remove();
+    }).appendTo($('.pee-add-list'));
+  }
+
+  function addPoop() {
+    var selected = $('.poop-list option:selected');
+    $('<li>').data('value', selected.attr('value')).html(selected.html()).click(function () {
+      $(this).remove();
+    }).appendTo($('.poop-add-list'));
+  }
+
+  function getNotesPromise() {
+    return new Promise(SheetModelImp.getNotes);
+  }
+
+  $(function () {
+    loading(true);
+    Promise.all([getSlotPromise(), getNotesPromise()]).
+    then(function (promises) {
+      var [slots, notes] = promises;
+
+      slots.forEach(function (txt, idx) {
+        $('<option>').attr('value', idx + 1).html(txt).appendTo($('.slot-select'));
+      });
+
+      notes.forEach(function (txt) {
+        $('<div>').addClass('text-list__item badge badge-success badge-pill').html(txt).click(function () {
+          var noteEl = $('.note-textarea');
+          noteEl.val(noteEl.val().trim() + (noteEl.val().trim() !== '' ? ',' : '') + txt);
+          noteEl.trigger('input');
+        }).appendTo($('.notes-list'));
+      });
+
+      loading(false);
+    });
+
+    PEE_TEXT.forEach(function (txt, idx) {
+      $('<option>').attr('value', idx).prop('selected', idx === 0).html(txt).appendTo($('.pee-list'));
+    });
+    POOP_TEXT.forEach(function (txt, idx) {
+      $('<option>').attr('value', idx).prop('selected', idx === 0).html(txt).appendTo($('.poop-list'));
+    });
+  });
+</script>

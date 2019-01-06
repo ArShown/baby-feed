@@ -58,7 +58,7 @@
   function createData(callback) {
     var hours = +(moment().format('H'));
     var date = moment().format('YYYY-MM-DD');
-    var slot_row = hours === 0 ? 24 : (hours + 1);
+    var slot_row = hours + 1;
     callback(date, slot_row);
   }
 

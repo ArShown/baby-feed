@@ -1,0 +1,53 @@
+<div class="modal-dialog" role="document">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title">編輯紀錄</h5>
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    <div class="modal-body record-form">
+
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-link btn-block" onClick="deleteSubmit();">刪除</button>
+      <button type="button" class="btn btn-info btn-block" onClick="updateSubmit();">更新</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function updateSubmit() {
+    //    if (!formValidate())
+    //      return false;
+    //    loading(true);
+    //    var data = formSerialize();
+    //    SheetModelImp.updateRecord(data, function () {
+    //      if ($('#date-input').val() === data.date)
+    //        fetchRecord();
+    //      loading(false);
+    //      $('#form-modal').modal('hide');
+    //    });
+  }
+
+  function deleteSubmit() {
+    if (!confirm('刪除記錄會將所有的事件一併移除，確定要刪除嗎？'))
+      return false;
+    loading(true);
+    var data = formSerialize();
+    SheetModelImp.removeRecord(data.row, function () {
+      if ($('#date-input').val() === data.date)
+        fetchRecord();
+      loading(false);
+      $('#form-modal').modal('hide');
+    });
+  }
+
+  $(function () {
+    $('.record-form').load('admin/templates/record.form.html', function () {
+      var data = $('.slot-list .record-item__modify').data('data');
+      $(this).find('input[name=row]').val(data.row);
+      $(this).find('input[name=date]').val(moment(data.date).format('YYYY-MM-DD'));
+    });
+  });
+</script>

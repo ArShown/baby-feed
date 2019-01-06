@@ -15,7 +15,7 @@
 <div class="container">
   <div class="page-title">記錄管理</div>
   <div class="text-right form-group">
-    <button class="btn btn-info">新增記錄</button>
+    <button class="btn btn-info" onclick="addRecord();">新增記錄</button>
   </div>
   <div class="input-group">
     <div class="input-group-prepend">
@@ -39,7 +39,16 @@
   </div>
 </div>
 <div id="detail-modal"></div>
+<div id="form-modal" class="modal fade" tabindex="-1" role="dialog">
+
+</div>
 <script>
+  function addRecord() {
+    $('#form-modal').load('admin/templates/record.add.form.html', function () {
+      $(this).modal('show');
+    });
+  }
+
   function displayTime(num) {
     if (num === '') return '????';
     if (parseInt(num) === 'NaN') return num;
@@ -78,6 +87,7 @@
 
   function fetchRecord() {
     SheetModelImp.cancel();
+    $('.slot-list').empty();
     $('.search-memo').toggleClass('search-memo--hidden', true);
     $('.record-loading').toggleClass('record-loading--hidden', false);
 
@@ -119,15 +129,25 @@
       $('.search-memo__poop').html(result.poop_count);
       $('.search-memo__note').html(result.note || '無');
       $('.search-memo__mistake').html((result.mistake.length === 0 ? '無' : result.mistake.join(',')));
-      $('.search-memo__table').click(function(){
+      $('.search-memo__table').click(function () {
         showDetail(res);
-      })
+      });
       $('.search-memo').toggleClass('search-memo--hidden', false);
 
       /* list */
       var itemEles = res.map(function (item) {
         return $('<div>').
         addClass('list-group-item list-group-item-action flex-column align-items-start text-left').
+        data('data', item).
+        click(function () {
+          var _this = $(this);
+          $('#form-modal').load('admin/templates/record.edit.form.html', function () {
+            $(this).one('hide.bs.modal', function () {
+              _this.removeClass('record-item__modify');
+            }).modal('show');
+            _this.addClass('record-item__modify');
+          });
+        }).
         html(
           '<div><b>時段：</b><span class="slot-item__time">' + slot[item.slot_row - 1] + '</span></div>' +
           '<div><b>事件：</b><ol>' +
@@ -147,5 +167,8 @@
   $(function () {
     $('#date-input').attr('max', moment().format('YYYY-MM-DD'));
     $('#detail-modal').load('src/templates/record.detail-modal.html');
+    $('#form-modal').on('hidden.bs.modal', function () {
+      $(this).empty();
+    });
   });
 </script>
