@@ -150,10 +150,11 @@
 
   function showDetail(detail) {
     $('#detailModalLabel').html(toDate(detail[0]['date']));
-    $('#detailModal').modal('show');
-    $('#detailModal .detail-loading').toggleClass('detail-loading--show', true);
+    var modalEl = $('#detailModal');
+    modalEl.modal('show');
+    modalEl.find('.detail-loading').toggleClass('detail-loading--show', true);
     SheetModelImp.getSlots(function (res) {
-      $('#detailModal .detail-loading').toggleClass('detail-loading--show', false);
+      modalEl.find('.detail-loading').toggleClass('detail-loading--show', false);
       new Promise(function (resolve) {
         res.forEach(function (slot, idx) {
           if (idx === 24) {
