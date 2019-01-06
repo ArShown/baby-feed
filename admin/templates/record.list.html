@@ -1,12 +1,151 @@
+<style>
+  .slot-list {
+    padding: 10px 0;
+    text-align: center;
+  }
+
+  .record-loading--hidden, .search-memo--hidden {
+    display: none;
+  }
+
+  .search-memo {
+    margin: 10px 0;
+  }
+</style>
 <div class="container">
-  <div class="page-title">哺育紀錄</div>
-  <div class="list-group anchor-list">
+  <div class="page-title">記錄管理</div>
+  <div class="text-right form-group">
+    <button class="btn btn-info">新增記錄</button>
   </div>
-  <div class="modal fade modify-modal" tabindex="-1" role="dialog">
+  <div class="input-group">
+    <div class="input-group-prepend">
+      <span class="input-group-text">查詢日期事件</span>
+    </div>
+    <input type="date" id="date-input" class="form-control" min="2018-10-09" onchange="fetchRecord();"/>
+  </div>
+  <div class="alert alert-secondary search-memo search-memo--hidden">
+    <div><b>查詢日期：</b><span class="search-memo__date"></span></div>
+    <div><b>總奶量：</b><span class="search-memo__drink"></span></div>
+    <div><b>小便次數：</b><span class="search-memo__pee"></span></div>
+    <div><b>大便次數：</b><span class="search-memo__poop"></span></div>
+    <div><b>備註：</b><span class="search-memo__note"></span></div>
+    <div><b>特殊情況：</b><span class="search-memo__mistake"></span></div>
+    <div class="text-right"><a class="search-memo__table" href="javascript:void(0)">表格瀏覽</a></div>
+  </div>
+  <div class="list-group slot-list">
+  </div>
+  <div class="record-loading record-loading--hidden text-secondary text-center">
+    <i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>
   </div>
 </div>
+<div id="detail-modal"></div>
 <script>
+  function displayTime(num) {
+    if (num === '') return '????';
+    if (parseInt(num) === 'NaN') return num;
+    return +num < 1000 ? '0' + num : num.toString();
+  }
+
+  function _stringToCount(strOrNum) {
+    return strOrNum.toString() ? strOrNum.toString().split(',').length : 0;
+  }
+
+  function _validMistake(pee, poop) {
+    var mistake = [];
+    pee.toString() && pee.toString().split(',').find(function (pe) {
+      return +pe !== 0;
+    }) && mistake.push('小便異常');
+    poop.toString() && poop.toString().split(',').find(function (po) {
+      return +po !== 0;
+    }) && mistake.push('大便異常');
+
+    return mistake;
+  }
+
+  function getSlotPromise() {
+    return new Promise(SheetModelImp.getSlots);
+  }
+
+  function getRecordPromise(date) {
+    return new Promise(function (resolve) {
+      SheetModelImp.getRecordByDate(date, resolve);
+    });
+  }
+
+  function setDataClass(hasMistake) {
+    return hasMistake ? 'detail-list__data bg-warning' : 'detail-list__data';
+  }
+
+  function fetchRecord() {
+    SheetModelImp.cancel();
+    $('.search-memo').toggleClass('search-memo--hidden', true);
+    $('.record-loading').toggleClass('record-loading--hidden', false);
+
+    Promise.all([getSlotPromise(), getRecordPromise($('#date-input').val())]).
+    then(function (promise) {
+      var [slot, res] = promise;
+      var res = promise[1];
+      $('.record-loading').toggleClass('record-loading--hidden', true);
+      if (res.length === 0) {
+        $('.slot-list').html('查無資料');
+        return false;
+      }
+
+      /* memo data */
+      var result = res.reduce(function (result, obj, idx) {
+        if (idx === 0) {
+          result = {
+            date: obj.date,
+            drink: +(obj.mom || 0) + +(obj.milk || 0),
+            pee_count: _stringToCount(obj.pee),
+            poop_count: _stringToCount(obj.poop),
+            note: +obj.slot_row === 25 ? obj.note : '',
+            mistake: _validMistake(obj.pee, obj.poop)
+          };
+          return result;
+        }
+
+        result['drink'] += +(obj.mom || 0) + +(obj.milk || 0);
+        result['pee_count'] += _stringToCount(obj.pee);
+        result['poop_count'] += _stringToCount(obj.poop);
+        result['note'] = +obj.slot_row === 25 ? obj.note : '';
+        result['mistake'] = result['mistake'].concat(_validMistake(obj.pee, obj.poop));
+        return result;
+      }, {});
+
+      $('.search-memo__date').html(moment(+result.date).format('YYYY-MM-DD'));
+      $('.search-memo__drink').html(result.drink);
+      $('.search-memo__pee').html(result.pee_count);
+      $('.search-memo__poop').html(result.poop_count);
+      $('.search-memo__note').html(result.note || '無');
+      $('.search-memo__mistake').html((result.mistake.length === 0 ? '無' : result.mistake.join(',')));
+      $('.search-memo__table').click(function(){
+        showDetail(res);
+      })
+      $('.search-memo').toggleClass('search-memo--hidden', false);
+
+      /* list */
+      var itemEles = res.map(function (item) {
+        return $('<div>').
+        addClass('list-group-item list-group-item-action flex-column align-items-start text-left').
+        html(
+          '<div><b>時段：</b><span class="slot-item__time">' + slot[item.slot_row - 1] + '</span></div>' +
+          '<div><b>事件：</b><ol>' +
+          (item.feed_start && ('<li>餵奶: ' + displayTime(item.feed_start) + '~' + displayTime(item.feed_end) + '</li>') || '') +
+          (item.mom && ('<li>母奶: ' + item.mom + '</li>') || '') +
+          (item.milk && ('<li>配方奶: ' + item.milk + '</li>') || '') +
+          (_stringToCount(item.pee) && ('<li>小便: ' + _stringToCount(item.pee) + ' 次</li>') || '') +
+          (_stringToCount(item.poop) && ('<li>大便: ' + _stringToCount(item.poop) + ' 次</li>') || '' ) +
+          '</ol></div>' +
+          '<div><b>備註：</b>' + (item.note || '無') + '</div>'
+        );
+      });
+      $('.slot-list').html(itemEles);
+    });
+  }
 
   $(function () {
+    $('#date-input').attr('max', moment().format('YYYY-MM-DD'));
+    $('#detail-modal').load('src/templates/record.detail-modal.html');
   });
 </script>

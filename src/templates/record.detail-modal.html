@@ -57,6 +57,24 @@
     justify-content: center;
     padding: 0 5px;
   }
+
+  .detail-loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background-color: rgba(255, 255, 255, 0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9;
+  }
+
+  .detail-loading--show {
+    display: flex;
+  }
+
 </style>
 <div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel"
      aria-hidden="true">
@@ -109,7 +127,7 @@
             </div>
           </div>
         </div>
-        <div class="date-pick-loading text-secondary">
+        <div class="detail-loading text-secondary">
           <i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>
         </div>
       </div>
@@ -133,9 +151,9 @@
   function showDetail(detail) {
     $('#detailModalLabel').html(toDate(detail[0]['date']));
     $('#detailModal').modal('show');
-    $('#detailModal .date-pick-loading').toggleClass('date-pick-loading--show', true);
+    $('#detailModal .detail-loading').toggleClass('detail-loading--show', true);
     SheetModelImp.getSlots(function (res) {
-      $('#detailModal .date-pick-loading').toggleClass('date-pick-loading--show', false);
+      $('#detailModal .detail-loading').toggleClass('detail-loading--show', false);
       new Promise(function (resolve) {
         res.forEach(function (slot, idx) {
           if (idx === 24) {
