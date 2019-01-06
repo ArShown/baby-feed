@@ -1,0 +1,56 @@
+<style>
+  .text-list {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .text-list__item {
+    padding: .5rem 1rem;
+    font-size: 1rem;
+    font-weight: 400;
+    margin: .3rem;
+  }
+</style>
+<div class="container">
+  <div class="page-title">新增備註</div>
+  <form class="feed-form">
+    <div class="form-group">
+      <textarea class="form-control note-textarea" placeholder="輸入內容..." rows="5"></textarea>
+    </div>
+    <div class="form-group">
+      <div class="text-list">
+      </div>
+    </div>
+    <button type="button" class="btn btn-info btn-block btn-submit" disabled onclick="noteSubmit()">送出</button>
+  </form>
+</div>
+<script>
+  function noteSubmit() {
+    loading(true);
+    createData(function (date, slot_row) {
+      SheetModelImp.insertRecord({
+        date: date,
+        slot_row: slot_row,
+        note: $('.note-textarea').val()
+      }, backToHome);
+    });
+  }
+
+  $(function () {
+    loading(true);
+    $('.note-textarea').on('input', function () {
+      $('.btn-submit').prop('disabled', $(this).val().trim() === "");
+    });
+
+    SheetModelImp.getNotes(function (res) {
+      res.forEach(function (txt) {
+        $('<div>').addClass('text-list__item badge badge-success badge-pill').html(txt).click(function () {
+          var noteEl = $('.note-textarea');
+          noteEl.val(noteEl.val().trim() + (noteEl.val().trim() !== '' ? ',' : '') + txt);
+          noteEl.trigger('input');
+        }).appendTo($('.text-list'));
+      });
+      loading(false);
+    });
+  });
+</script>
