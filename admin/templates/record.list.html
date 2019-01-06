@@ -123,7 +123,7 @@
       $('.search-memo__poop').html(result.poop_count);
       $('.search-memo__note').html(result.note || '無');
       $('.search-memo__mistake').html((result.mistake.length === 0 ? '無' : result.mistake.join(',')));
-      $('.search-memo__table').one('click', function () {
+      $('.search-memo__table').off('click').on('click', function () {
         showDetail(res);
       });
       $('.search-memo').toggleClass('search-memo--hidden', false);
