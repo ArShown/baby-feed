@@ -151,6 +151,8 @@
   function showDetail(detail) {
     $('#detailModalLabel').html(toDate(detail[0]['date']));
     var modalEl = $('#detailModal');
+    modalEl.find('.detail-list__slot-list').empty();
+    modalEl.find('.detail-list__body').empty();
     modalEl.modal('show');
     modalEl.find('.detail-loading').toggleClass('detail-loading--show', true);
     SheetModelImp.getSlots(function (res) {
