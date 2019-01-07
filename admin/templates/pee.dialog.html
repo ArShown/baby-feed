@@ -23,6 +23,7 @@
         pee: ''+$('.pee-form input[name=pee]:checked').val()
       }, function (res) {
         $('.close').click();
+        fetchLastChange();
         loading(false);
       });
     });

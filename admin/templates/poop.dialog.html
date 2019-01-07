@@ -23,6 +23,7 @@
         poop: ''+$('.poop-form input[name=poop]:checked').val()
       }, function (res) {
         $('.close').click();
+        fetchLastChange();
         loading(false);
       });
     });
