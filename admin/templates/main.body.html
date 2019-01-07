@@ -9,11 +9,11 @@
       上次餵奶時間：<span class="last-feed-start">????</span>~<span class="last-feed-end">????</span>
     </div>
     <div class="main__menu__item main__menu__item--full">
-      <div class="menu-box">
-        <div class="feed-start" onclick="startToFeed();">
+      <div class="menu-box feed-box">
+        <div class="feed-start">
           開始餵奶
         </div>
-        <div class="feed-end feed-status--hide" onclick="loadPage(this, 'feed-done');">
+        <div class="feed-end feed-status--hide">
           結束餵奶
         </div>
       </div>
@@ -68,7 +68,7 @@
     });
   }
 
-  function choosePoop(){
+  function choosePoop() {
     $('#choose-modal .modal-dialog').load('admin/templates/poop.dialog.html', function () {
       $('#choose-modal').modal('show');
     });
@@ -124,12 +124,15 @@
   }
 
   $(function () {
-    loading(true);
-    var lastChangePromise = fetchLastChange();
-    var lastFeedPromise = fetchLastFeed();
-
-    Promise.all([lastChangePromise, lastFeedPromise]).then(function () {
-      loading(false);
+    loading(false);
+    fetchLastChange();
+    $('.feed-box').addClass('menu-box--disabled');
+    fetchLastFeed().then(function () {
+      $('.feed-box').removeClass('menu-box--disabled');
+      $('.feed-start').on('click', startToFeed);
+      $('.feed-end').on('click', function () {
+        loadPage(this, 'feed-done');
+      });
     });
   });
 </script>
