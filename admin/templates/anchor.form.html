@@ -69,8 +69,7 @@
         anchorCreateBreak('新增成功');
         $('.anchor-form input').val('');
         $('.anchor-form textarea').val('');
-        var d = new Date();
-        $('.anchor-form input[type=date]').val(d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + (d.getDate() < 10 ? '0' : '') + d.getDate());
+        $('.anchor-form').find('input[name=date]').val(moment().format('YYYY-MM-DD'));
       });
     }
 
@@ -125,7 +124,7 @@
   }
 
   $(function(){
-    $('.anchor-form').find('input[type=date]').val(moment().format('YYYY-MM-DD'));
+    $('.anchor-form').find('input[name=date]').val(moment().format('YYYY-MM-DD'));
   })
 
 </script>

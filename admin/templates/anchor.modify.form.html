@@ -79,6 +79,15 @@
           alert('刪除失敗');
           return false;
         }
+
+        /* upgrade row */
+        $('.author-list__item').each(function () {
+          var _this = $(this);
+          var _row = _this.data('row');
+          if (_row > row)
+            _this.data('row', _row - 1);
+        });
+
         $('.modify-modal').one('hide.bs.modal', function () {
           $('.author-list__item--modify').remove();
         });
@@ -205,9 +214,9 @@
     });
   }
 
-  function insertValues(data) {
+  function insertValues(row, data) {
     var form = $('.anchor-modify-form');
-    form.find('input[name="row"]').val(data.row);
+    form.find('input[name="row"]').val(row);
     form.find('input[name="date"]').
     val(data.date);
     form.find('input[name="note"]').val(data.note);
@@ -233,6 +242,6 @@
 
   $(function () {
     var targetEle = $('.author-list__item.author-list__item--modify');
-    insertValues(targetEle.data('data'));
+    insertValues(targetEle.data('row'), targetEle.data('data'));
   });
 </script>
