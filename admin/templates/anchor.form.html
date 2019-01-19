@@ -69,6 +69,7 @@
         anchorCreateBreak('新增成功');
         $('.anchor-form input').val('');
         $('.anchor-form textarea').val('');
+        $('.file-placeholder').html('選擇檔案');
         $('.anchor-form').find('input[name=date]').val(moment().format('YYYY-MM-DD'));
       });
     }
@@ -123,8 +124,8 @@
     return false;
   }
 
-  $(function(){
+  $(function () {
     $('.anchor-form').find('input[name=date]').val(moment().format('YYYY-MM-DD'));
-  })
+  });
 
 </script>
