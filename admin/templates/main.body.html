@@ -63,13 +63,13 @@
   }
 
   function choosePee() {
-    $('#choose-modal .modal-dialog').load('admin/templates/pee.dialog.html', function () {
+    $('#choose-modal .modal-dialog').empty().load('admin/templates/pee.dialog.html', function () {
       $('#choose-modal').modal('show');
     });
   }
 
   function choosePoop() {
-    $('#choose-modal .modal-dialog').load('admin/templates/poop.dialog.html', function () {
+    $('#choose-modal .modal-dialog').empty().load('admin/templates/poop.dialog.html', function () {
       $('#choose-modal').modal('show');
     });
   }
