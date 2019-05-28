@@ -1,5 +1,5 @@
 <div class="main__content">
-  <button type="button" class="btn btn-primary" onclick="chooseDates();">選擇日期</button>
+  <button type="button" class="btn btn-primary" id="choose-date-btn">選擇日期</button>
   <div class="table-responsive main__table main__table--hidden">
     <table class="table date-sheet table-striped">
       <thead class="thead-dark date-sheet__head">
@@ -26,83 +26,91 @@
     </table>
   </div>
 </div>
-<div id="search-modal"></div>
+<style>
+  .fast {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .fast__item {
+    padding: 10px 15px;
+    border: 2px solid #18a2b8;
+    margin: 2px;
+  }
+</style>
+<div class="modal fade" id="datePickModal" tabindex="-1" role="dialog"
+     aria-labelledby="datePickModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="datePickModalLabel">選擇查詢日期</h5>
+        <div class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </div>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="return false;">
+          <div class="form-group">
+            <label>起始日</label>
+            <input type="date" class="form-control" name="start"/>
+            <div class="invalid-feedback">
+              請選擇日期
+            </div>
+          </div>
+          <div class="form-group">
+            <label>迄止日</label>
+            <input type="date" class="form-control" name="end"/>
+            <div class="invalid-feedback">
+              請選擇日期
+            </div>
+          </div>
+          <div class="form-group">
+            <p class="text-danger server-message"></p>
+          </div>
+          <div class="form-group">
+            <button type="button" class="btn btn-info btn-block" id="submit-btn">確認</button>
+          </div>
+          <hr/>
+          <div>
+            <label>快速查詢</label>
+            <div class="fast">
+              <button class="col bg-light text-secondary fast__item" data-date="twomonth">
+                前兩個月
+              </button>
+              <button class="col bg-light text-secondary fast__item" data-date="lastmonth">
+                上個月
+              </button>
+              <button class="col bg-light text-secondary fast__item" data-date="thismonth">
+                本月
+              </button>
+              <div class="w-100"></div>
+              <button class="col bg-light text-secondary fast__item" data-date="thisweek">
+                最近一週
+              </button>
+              <button class="col bg-light text-secondary fast__item" data-date="yesterday">
+                前一日
+              </button>
+              <button class="col bg-light text-secondary fast__item" data-date="today">
+                今天
+              </button>
+            </div>
+          </div>
+        </form>
+        <div class="date-pick-loading text-secondary">
+          <i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="btn btn-secondary btn-block" data-dismiss="modal">關閉</div>
+      </div>
+    </div>
+  </div>
+</div>
 <div id="detail-modal"></div>
 
 <script>
-  function insertData(res) {
-    function _stringToCount(strOrNum) {
-      return strOrNum.toString() ? strOrNum.toString().split(',').length : 0;
-    }
-
-    function _validMistake(pee, poop) {
-      var mistake = [];
-      pee.toString() && pee.toString().split(',').find(function (pe) {
-        return +pe !== 0;
-      }) && mistake.push('小便異常');
-      poop.toString() && poop.toString().split(',').find(function (po) {
-        return +po !== 0;
-      }) && mistake.push('大便異常');
-
-      return mistake;
-    }
-
-    /* table clear */
-    $('.date-sheet__body').empty();
-
-    /* insert data */
-    var result = res.reduce(function (result, obj) {
-      var targetIdx = result.findIndex(function (item) {
-        return item.date === obj.date;
-      });
-
-      if (targetIdx === -1) {
-        result.push({
-          date: obj.date,
-          drink: +(obj.mom || 0) + +(obj.milk || 0),
-          pee_count: _stringToCount(obj.pee),
-          poop_count: _stringToCount(obj.poop),
-          note: +obj.slot_row === 25 ? obj.note : '',
-          mistake: _validMistake(obj.pee, obj.poop),
-          detail: [obj]
-        });
-        return result;
-      }
-
-      result[targetIdx]['drink'] += +(obj.mom || 0) + +(obj.milk || 0);
-      result[targetIdx]['pee_count'] += _stringToCount(obj.pee);
-      result[targetIdx]['poop_count'] += _stringToCount(obj.poop);
-      result[targetIdx]['note'] = +obj.slot_row === 25 ? obj.note : '';
-      result[targetIdx]['mistake'] = result[targetIdx]['mistake'].concat(_validMistake(obj.pee, obj.poop));
-      result[targetIdx]['detail'].push(obj);
-      return result;
-    }, []);
-
-    result.forEach(function (item, idx) {
-      var btn = $('<button>').addClass('btn btn-info btn-sm').html('查看').click(function () {
-        showDetail(item.detail);
-        return false;
-      });
-
-      var row = $('<tr>').html(
-        '<td data-title="日期" class="date-sheet__no-wrap">' + toDate(item.date) + '</td>' +
-        '<td data-title="喝奶總量">' + item.drink + '</td>' +
-        '<td data-title="小便次數">' + item.pee_count + '</td>' +
-        '<td data-title="大便次數">' + item.poop_count + '</td>' +
-        '<td data-title="備註">' + (item.note || '無') + '</td>' +
-        '<td data-title="特殊狀況">' + (item.mistake.length === 0 ? '無' : item.mistake.join(',')) + '</td>'
-      );
-      $('<td>').attr('data-title','查看').html(btn).appendTo(row);
-      row.prependTo($('.date-sheet__body'));
-    });
-  }
-
-  function toDate(date) {
-    return moment(date).format("YYYY-MM-DD");
-  }
-
   $(function () {
-    $('#search-modal').load('src/templates/record.search-modal.html');
     $('#detail-modal').load('src/templates/record.detail-modal.html');
   });
 </script>
