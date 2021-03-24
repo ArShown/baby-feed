@@ -222,7 +222,7 @@
     form.find('input[name="note"]').val(data.note);
     form.find('textarea[name="info"]').val(data.info);
     var images = data.images.map(function (image) {
-      var href = 'http://drive.google.com/uc?export=view&id=' + image;
+      var href = 'https://drive.google.com/uc?export=view&id=' + image;
       var box = $('<div>').addClass('anchor-modal__file-list__item').data('id', image).click(function () {
         var _this = $(this);
         _this.
